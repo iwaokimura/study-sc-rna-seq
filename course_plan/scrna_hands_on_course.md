@@ -465,8 +465,6 @@ scRNA-seq 解析の各ステップと数理的概念の対応を整理する：
 <a id="references"></a>
 ## 参考文献
 
-以下の文献はすべて実在を確認済みである．URL 付きで示す．
-
 **\[Ref. 1\]** Wolf, F.A., Angerer, P., Theis, F.J. (2018). SCANPY: large-scale single-cell gene expression data analysis. *Genome Biology*, 19, 15. https://doi.org/10.1186/s13059-017-1382-0
 
 **\[Ref. 2\]** Scanpy — PBMC 3k tutorial (Preprocessing and clustering 3k PBMCs). Scanpy Documentation. https://scanpy-tutorials.readthedocs.io/en/latest/pbmc3k.html
