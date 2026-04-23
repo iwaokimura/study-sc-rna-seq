@@ -409,18 +409,42 @@ $$\frac{du}{dt} = \alpha(t) - \beta u, \qquad \frac{ds}{dt} = \beta u - \gamma s
 
 > **⚠ データの準備**：scVelo は unspliced（スプライシング前）と spliced（スプライシング後）の両カウントを必要とする．10x Genomics の `filtered_gene_bc_matrices` にはこの情報が含まれないため，**velocyto** または **STARsolo** を用いて別途 loom / h5ad ファイルを生成する必要がある．PBMC 3k でそのまま実行することはできない．
 
+本コースでは，scVelo が提供する組み込みサンプルデータ（膵臓β細胞分化）を使用して動作を確認する：
+
 ```python
 import scvelo as scv
 
-# velocyto または STARsolo が出力した loom ファイルから読み込み
-adata_velo = scv.read('path/to/sample.loom', cache=True)
+# scVelo サンプルデータ（膵臓β細胞分化）を使用
+# unspliced / spliced カウントが含まれた AnnData が返される
+adata_velo = scv.datasets.pancreas()
+
+scv.pp.filter_and_normalize(adata_velo, min_shared_counts=20)
+scv.pp.moments(adata_velo, n_pcs=30, n_neighbors=30)
+
+# dynamical モデルの前に splicing dynamics を推定する
+scv.tl.recover_dynamics(adata_velo)
+scv.tl.velocity(adata_velo, mode='dynamical')
+scv.tl.velocity_graph(adata_velo)
+scv.pl.velocity_embedding_stream(adata_velo, basis='umap', color='clusters')
+```
+
+> **注意（scvelo 0.3.x 以降）**：旧来の `scv.read()` は廃止されており，`scv.load()` を使用すること．また `filter_and_normalize()` の `n_top_genes` 引数も削除されているため使用不可．`mode='dynamical'` を指定する場合は事前に `scv.tl.recover_dynamics()` の実行が必要である．
+
+自前のデータ（velocyto / STARsolo 出力の loom ファイル）を使う場合：
+
+```python
+import scvelo as scv
+
+# loom ファイルの読み込み（scv.read は廃止，scv.load を使用）
+adata_velo = scv.load('path/to/sample.loom', cache=True)
 scv.utils.clean_obs_names(adata_velo)
 
 # モジュール 1〜5 で作成した adata とバーコードを照合してマージ
 adata_velo = scv.utils.merge(adata_velo, adata)
 
-scv.pp.filter_and_normalize(adata_velo, min_shared_counts=20, n_top_genes=2000)
+scv.pp.filter_and_normalize(adata_velo, min_shared_counts=20)
 scv.pp.moments(adata_velo, n_pcs=30, n_neighbors=30)
+scv.tl.recover_dynamics(adata_velo)
 scv.tl.velocity(adata_velo, mode='dynamical')
 scv.tl.velocity_graph(adata_velo)
 scv.pl.velocity_embedding_stream(adata_velo, basis='umap')
