@@ -288,6 +288,7 @@ PBMC の代表的なマーカー遺伝子 \[Ref. 4\]\[Ref. 5\]：
 
 | 細胞型 | マーカー遺伝子 | 表面マーカー（参考） |
 |---|---|---|
+| T 細胞（共通） | CD3D | CD3+ |
 | CD4+ T 細胞 | IL7R, CCR7 | CD3+, CD4+ |
 | CD8+ T 細胞 | CD8A | CD3+, CD8+ |
 | B 細胞 | MS4A1 (CD20), CD79A | CD19+ |
@@ -298,20 +299,46 @@ PBMC の代表的なマーカー遺伝子 \[Ref. 4\]\[Ref. 5\]：
 | 血小板 | PPBP | — |
 
 ```python
-marker_genes = ['IL7R', 'CD79A', 'MS4A1', 'CD8A', 'CD14', 'LYZ',
-                'GNLY', 'FCGR3A', 'FCER1A', 'PPBP']
+marker_genes = ['CD3D', 'IL7R', 'CD8A', 'MS4A1', 'CD79A', 'GNLY', 'NKG7',
+                'CD14', 'LYZ', 'FCGR3A', 'MS4A7', 'FCER1A', 'PPBP']
 sc.pl.umap(adata, color=marker_genes)
 sc.pl.dotplot(adata, marker_genes, groupby='leiden')
 
-# アノテーションの割り当て（例）
+# クラスターごとの発現細胞割合（dotplot の点の大きさに相当）
+expr = sc.get.obs_df(adata, keys=['leiden'] + marker_genes, use_raw=True)
+(expr.set_index('leiden') > 0).groupby(level=0, observed=True).mean().round(2).T
+```
+
+PBMC 3k（モジュール 4 の設定）での発現細胞割合の例：
+
+| Leiden | 細胞数 | 主なマーカー（発現細胞割合） | 細胞型 |
+|---|---|---|---|
+| 0 | 1184 | CD3D 0.88，IL7R 0.66，CD8A 0.12 | CD4 T |
+| 1 | 641 | CD14 0.54，LYZ 1.00，FCGR3A 0.34，MS4A7 0.40 | Monocyte（CD14+ と FCGR3A+ の混在） |
+| 2 | 425 | NKG7 0.99，GNLY 0.56，CD3D 0.60，CD8A 0.35 | CD8 T / NK |
+| 3 | 341 | MS4A1 0.86，CD79A 0.94 | B |
+| 4 | 34 | FCER1A 0.82，CST3 1.00 | Dendritic |
+| 5 | 13 | PPBP 1.00 | Platelet |
+
+```python
+# アノテーションの割り当て（resolution=0.5 で得られた 6 クラスターに対応）
+# 根拠は上の dotplot と発現細胞割合の表
 cell_type_map = {
-    '0': 'CD4 T', '1': 'CD14 Mono', '2': 'B',
-    '3': 'CD8 T', '4': 'NK', '5': 'CD14 Mono',
-    '6': 'Dendritic', '7': 'CD16 Mono', '8': 'Platelet'
+    '0': 'CD4 T',       # CD3D, IL7R
+    '1': 'Monocyte',    # CD14, LYZ（古典的）と FCGR3A, MS4A7（非古典的）が混在
+    '2': 'CD8 T / NK',  # NKG7, GNLY．CD3D・CD8A を発現する細胞（CD8 T）も含む
+    '3': 'B',           # MS4A1, CD79A
+    '4': 'Dendritic',   # FCER1A, CST3
+    '5': 'Platelet',    # PPBP
 }
+# クラスター構成が変わると対応表は無効になるので確認する
+assert set(cell_type_map) == set(adata.obs['leiden'].cat.categories), \
+    f"Leiden クラスター {list(adata.obs['leiden'].cat.categories)} が対応表と一致しない"
 adata.obs['cell_type'] = adata.obs['leiden'].map(cell_type_map)
 sc.pl.umap(adata, color=['cell_type'], legend_loc='on data')
 ```
+
+> **注意**：モジュール 4 の `resolution=0.5` では Leiden クラスターは 6 個になり，古典的単球（CD14+）と非古典的単球（FCGR3A+），CD8+ T 細胞と NK 細胞がそれぞれ 1 つのクラスターにまとまる．クラスター番号と細胞型の対応は，データ・パラメータ・ソフトウェアの版によって変わる．対応表は既存の例を流用せず，必ずマーカー遺伝子の発現から作り直す．`resolution` を大きくするとこれらのクラスターが分かれるかを確かめるのはよい演習である．
 
 > **自動化ツール**：手動アノテーションが最も難所である．自動化ツールとして ScType（マーカー遺伝子データベース利用）や SingleR（参照データセットとのスピアマン相関）がある \[Ref. 5\]．
 
@@ -334,11 +361,11 @@ $$P(X = k) = \binom{k + r - 1}{k} p^k (1-p)^r, \quad k = 0, 1, 2, \ldots$$
 # 特定の 2 グループ間の DEG（Wilcoxon 検定）
 sc.tl.rank_genes_groups(
     adata, groupby='cell_type',
-    groups=['CD14 Mono'], reference='CD4 T',
+    groups=['Monocyte'], reference='CD4 T',
     method='wilcoxon'
 )
-sc.pl.rank_genes_groups(adata, groups=['CD14 Mono'])
-sc.pl.rank_genes_groups_violin(adata, groups='CD14 Mono', n_genes=8)
+sc.pl.rank_genes_groups(adata, groups=['Monocyte'])
+sc.pl.rank_genes_groups_violin(adata, groups='Monocyte', n_genes=8)
 ```
 
 ### 擬似バルク法（Pseudobulk）：集約の実習
