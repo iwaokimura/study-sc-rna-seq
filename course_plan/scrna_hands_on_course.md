@@ -46,7 +46,7 @@
 2. **遺伝子発現**（転写）とは，DNA の情報が mRNA に写し取られるプロセス．mRNA の量が「その遺伝子がどれだけ使われているか」を示す．scRNA-seq はこの mRNA 量を各細胞ごとに計測する技術である．
 3. **PBMC**（末梢血単核球）とは血液中の免疫細胞の集合体で，T 細胞（CD4+: 25〜60%，CD8+: 5〜30%），B 細胞（5〜10%，CD19+），NK 細胞（10〜30%，CD56+CD3-），単球（CD14+）などを含む．本コースで用いる PBMC データは，これらの異なる細胞種が混在する状況での **分類問題** として捉えると数学的に理解しやすい．
 
-> **数理的直観**：scRNA-seq の出力は $m \times n$ 行列（$m$ = 遺伝子数 ≈ 20,000，$n$ = 細胞数 ≈ 3,000）であり，各エントリは非負整数（UMI カウント）である．目標はこの高次元空間の点群を意味のある部分集合（細胞型）に分類することである．
+> **数理的直観**：scRNA-seq の出力は $m \times n$ 行列（ $m$ = 遺伝子数 ≈ 20,000， $n$ = 細胞数 ≈ 3,000）であり，各エントリは非負整数（UMI カウント）である．目標はこの高次元空間の点群を意味のある部分集合（細胞型）に分類することである．
 
 ### 使用ツールと公開データ
 
@@ -112,7 +112,7 @@ adata.var_names_make_unique()
 print(adata)  # AnnData object: 2700 obs × 32738 vars
 ```
 
-`adata.X` は疎行列（scipy sparse matrix）であり，$2{,}700 \times 32{,}738$ の UMI カウント行列である．エントリの大部分はゼロ（スパース性 > 90%）で，これは **ドロップアウト** と呼ばれる技術的アーティファクトに起因する \[Ref. 4\]．
+`adata.X` は疎行列（scipy sparse matrix）であり， $2{,}700 \times 32{,}738$ の UMI カウント行列である．エントリの大部分はゼロ（スパース性 > 90%）で，これは **ドロップアウト** と呼ばれる技術的アーティファクトに起因する \[Ref. 4\]．
 
 ### QC 指標の計算
 
@@ -130,7 +130,7 @@ sc.pp.calculate_qc_metrics(
 
 | 指標 | 数理的意味 | フィルタ閾値の目安 |
 |---|---|---|
-| `n_genes_by_counts` | 非ゼロエントリ数（$\ell_0$ ノルム的） | 200〜2,500 |
+| `n_genes_by_counts` | 非ゼロエントリ数（ $\ell_0$ ノルム的） | 200〜2,500 |
 | `total_counts` | 各行の $\ell_1$ ノルム（ライブラリサイズ） | 外れ値除去 |
 | `pct_counts_mt` | ミトコンドリア遺伝子カウントの割合 | < 5% |
 
@@ -161,7 +161,7 @@ sc.pp.filter_genes(adata, min_cells=3)
 
 ### 正規化：なぜ必要か
 
-各細胞間で捕捉された総 RNA 量（ライブラリサイズ，$s_i = \sum_j x_{ij}$）は技術的ばらつきにより異なる．単純なサイズファクター正規化（CPM 正規化相当）を適用する \[Ref. 4\]\[Ref. 5\]：
+各細胞間で捕捉された総 RNA 量（ライブラリサイズ， $s_i = \sum_j x_{ij}$ ）は技術的ばらつきにより異なる．単純なサイズファクター正規化（CPM 正規化相当）を適用する \[Ref. 4\]\[Ref. 5\]：
 
 $$\tilde{x}_{ij} = \frac{x_{ij}}{s_i} \cdot 10{,}000$$
 
@@ -198,7 +198,7 @@ sc.pp.scale(adata, max_value=10)
 
 ### PCA：線形次元削減
 
-正規化済みデータ行列 $X \in \mathbb{R}^{n \times m}$（$n$ = 細胞，$m$ = HVG 数）に対し，PCA は共分散行列の固有値分解 $X^\top X = V \Lambda V^\top$ を通じて，分散最大方向への射影を求める \[Ref. 4\]：
+正規化済みデータ行列 $X \in \mathbb{R}^{n \times m}$（ $n$ = 細胞， $m$ = HVG 数）に対し，PCA は共分散行列の固有値分解 $X^\top X = V \Lambda V^\top$ を通じて，分散最大方向への射影を求める \[Ref. 4\]：
 
 ```python
 sc.tl.pca(adata, svd_solver='arpack')
@@ -210,7 +210,7 @@ sc.pl.pca(adata, color=['CST3', 'NKG7', 'PPBP'])
 
 ### 近傍グラフの構築
 
-UMAP およびクラスタリングの前に，$k$-最近傍グラフを構築する \[Ref. 1\]：
+UMAP およびクラスタリングの前に， $k$-最近傍グラフを構築する \[Ref. 1\]：
 
 ```python
 sc.pp.neighbors(adata, n_neighbors=10, n_pcs=40)
@@ -252,7 +252,7 @@ scRNA-seq では，まず細胞間の $k$-NN グラフを構築し（モジュ�
 
 $$Q = \frac{1}{2m} \sum_{ij} \left[ A_{ij} - \frac{k_i k_j}{2m} \right] \delta(c_i, c_j)$$
 
-ここで $A_{ij}$ は隣接行列，$k_i$ は頂点 $i$ の次数，$m$ は総辺数，$\delta(c_i, c_j)$ は $i, j$ が同クラスターのとき 1，そうでないとき 0 となる \[Ref. 11\]：
+ここで $A_{ij}$ は隣接行列， $k_i$ は頂点 $i$ の次数， $m$ は総辺数， $\delta(c_i, c_j)$ は $i, j$ が同クラスターのとき 1，そうでないとき 0 となる \[Ref. 11\]：
 
 ```python
 # igraph 実装（将来の既定）を明示する．n_iterations=2 は Leiden の反復回数，igraph 実装は無向グラフのみ対応
@@ -377,7 +377,7 @@ sc.pl.rank_genes_groups_violin(adata, groups='Monocyte', n_genes=8)
 
 $$Y = A X \in \mathbb{Z}_{\geq 0}^{k \times m}, \qquad Y_{gj} = \sum_{i \,:\, (s(i), c(i)) = g} X_{ij}$$
 
-である．$A$ の各列はちょうど 1 つの成分が $1$ なので，$\mathbf{1}_k^\top Y = \mathbf{1}_n^\top X$（遺伝子ごとの総カウントは保存される）．
+である． $A$ の各列はちょうど 1 つの成分が $1$ なので， $\mathbf{1}_k^\top Y = \mathbf{1}_n^\top X$（遺伝子ごとの総カウントは保存される）．
 
 **注意．**
 
@@ -477,7 +477,7 @@ sc.pl.umap(adata, color=['dpt_pseudotime'], color_map='viridis')
 
 $$\frac{du}{dt} = \alpha(t) - \beta u, \qquad \frac{ds}{dt} = \beta u - \gamma s$$
 
-ここで $u$ は未スプライシング mRNA，$s$ はスプライシング済み mRNA，$\alpha$ は転写率，$\beta$ はスプライシング率，$\gamma$ は分解率である \[Ref. 14\]：
+ここで $u$ は未スプライシング mRNA， $s$ はスプライシング済み mRNA， $\alpha$ は転写率， $\beta$ はスプライシング率， $\gamma$ は分解率である \[Ref. 14\]：
 
 > **⚠ データの準備**：scVelo は unspliced（スプライシング前）と spliced（スプライシング後）の両カウントを必要とする．10x Genomics の `filtered_gene_bc_matrices` にはこの情報が含まれないため，**velocyto** または **STARsolo** を用いて別途 loom / h5ad ファイルを生成する必要がある．PBMC 3k でそのまま実行することはできない．
 
