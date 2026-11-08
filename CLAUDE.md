@@ -72,6 +72,11 @@
 
 - Python は 3.13（リポジトリ直下の `.python-version`）．
 - 全体の実行には約 10 分かかる（大半はモジュール 7 の RNA velocity）．
+- モジュール 6 発展版（`course/module6-multidonor.ipynb`，約 1 分）は依存グループ `multidonor` が必要で，既定の `uv sync` を実行すると PyDESeq2 が外れる．次のように実行する：
+
+  ```bash
+  uv run --group multidonor jupyter nbconvert --to notebook --execute --inplace --allow-errors --ExecutePreprocessor.timeout=1800 course/module6-multidonor.ipynb
+  ```
 
 - データの相対パスは `course/` 基準（`data/filtered_gene_bc_matrices/hg19/`）．
 - 出力（図・実行結果）はノートブックに含めたままコミットする．

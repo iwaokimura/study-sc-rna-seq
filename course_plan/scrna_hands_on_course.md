@@ -435,7 +435,40 @@ print(f'ゼロ成分の割合: X = {1 - X.nnz / np.prod(X.shape):.3f}, Y = {(Y =
 pseudobulk[['LYZ', 'CD14', 'MS4A1', 'CD79A', 'IL7R', 'NKG7']]
 ```
 
-多数のドナーを含む実データで擬似バルクから負の二項 GLM による検定まで行う発展版は，[`plan_module6_multidonor.md`](plan_module6_multidonor.md) に計画を記す．
+多数のドナーを含む実データで，擬似バルクから負の二項 GLM による検定まで行うのが次の発展版である．
+
+### 発展：複数ドナーでの擬似バルク差次発現解析
+
+ノートブック：[`course/module6-multidonor.ipynb`](../course/module6-multidonor.ipynb)．データは Kang et al. の PBMC（ループス患者 8 名，各ドナーの未処置 `ctrl` と IFN-β 刺激 `stim`）\[Ref. 15\]．配布元の細胞型注釈を用い，CD14+ 単球を解析する．
+
+**モデル．** 擬似バルクサンプル $g$ と遺伝子 $j$ について
+
+$$Y_{gj} \sim \mathrm{NB}(\mu_{gj}, \alpha_j), \qquad \mathrm{Var}(Y_{gj}) = \mu_{gj} + \alpha_j \mu_{gj}^2, \qquad \log \mu_{gj} = \log s_g + \mathbf{x}_g^\top \boldsymbol{\beta}_j$$
+
+とおく（DESeq2 \[Ref. 16\] とその Python 実装 PyDESeq2 \[Ref. 17\] ）．計画式は対応のある設計 `~ replicate + label` とし，条件の係数について $H_0 : \beta_{j,\mathrm{stim}} = 0$ を Wald 検定する．サイズ因子は median-of-ratios
+
+$$s_g = \operatorname*{median}_{j : K_j > 0} \frac{Y_{gj}}{K_j}, \qquad K_j = \Bigl(\prod_{g} Y_{gj}\Bigr)^{1/G}$$
+
+で推定し，分散は遺伝子ごとの推定値をトレンドへ MAP 推定で縮小する．多重検定は Benjamini–Hochberg 法で補正する．ノートブックではトレンドを定数（`fit_type='mean'`）とする．パラメトリックなトレンドの当てはめの収束が遺伝子フィルタの閾値に左右されたためである．
+
+**結果（ $\mathrm{padj} < 0.05$ ， 3709 遺伝子）．**
+
+| 方法 | `stim` 対 `ctrl` で有意な遺伝子数 |
+|---|---:|
+| 擬似バルク `~ replicate + label` | 2418 |
+| 擬似バルク `~ label` | 2352 |
+| 細胞単位の Wilcoxon | 1995 |
+
+処置の効果が強いこの比較では，細胞単位の検定の方が有意な遺伝子が多いわけではない．
+
+**擬似反復の実験．** `ctrl` の細胞だけを使い，8 名のドナーを 4 対 4 に分ける $\binom{8}{4} / 2 = 35$ 通りすべてで，群 A，B を比較した．群に効果はないので，有意な遺伝子は偽陽性である．
+
+| 方法 | 偽陽性 0 個の分け方 | 偽陽性数の中央値 | 偽陽性数の最大値 |
+|---|---:|---:|---:|
+| 細胞単位の Wilcoxon | 0 / 35 | 139 | 271 |
+| 擬似バルク DESeq2 | 27 / 35 | 0 | 24 |
+
+細胞単位の検定はドナー間の差を群の差と取り違える \[Ref. 18\]\[Ref. 19\]．擬似バルクは偽陽性を大幅に減らすが，なくすわけではない．全帰無のもとで BH 法の FDR は「1 個以上棄却する確率」に等しく，独立または PRDS の仮定のもとで $0.05$ 以下のはずだが，観測は $8 / 35 \approx 0.23$ だった．分け方どうしは独立でないので正確な率とは言えず，原因（小標本での Wald 検定の正規近似など）は確かめていない．
 
 ---
 
@@ -590,4 +623,14 @@ scRNA-seq 解析の各ステップと数理的概念の対応を整理する：
 **\[Ref. 13\]** Coifman, R.R., Lafon, S. (2006). Diffusion maps. *Applied and Computational Harmonic Analysis*, 21(1), 5–30. https://doi.org/10.1016/j.acha.2006.04.006
 
 **\[Ref. 14\]** Bergen, V., Lange, M., Peidli, S., Wolf, F.A., Theis, F.J. (2020). Generalizing RNA velocity to transient cell states through dynamical modeling. *Nature Biotechnology*, 38, 1408–1414. https://doi.org/10.1038/s41587-020-0591-3
+
+**\[Ref. 15\]** Kang, H.M., Subramaniam, M., Targ, S., Nguyen, M., Maliskova, L., ... Ye, C.J. (2018). Multiplexed droplet single-cell RNA-sequencing using natural genetic variation. *Nature Biotechnology*, 36(1), 89–94. https://doi.org/10.1038/nbt.4042
+
+**\[Ref. 16\]** Love, M.I., Huber, W., Anders, S. (2014). Moderated estimation of fold change and dispersion for RNA-seq data with DESeq2. *Genome Biology*, 15, 550. https://doi.org/10.1186/s13059-014-0550-8
+
+**\[Ref. 17\]** Muzellec, B., Teleńczuk, M., Cabeli, V., Andreux, M. (2023). PyDESeq2: a python package for bulk RNA-seq differential expression analysis. *Bioinformatics*, 39(9), btad547. https://doi.org/10.1093/bioinformatics/btad547
+
+**\[Ref. 18\]** Squair, J.W., Gautier, M., Kathe, C., Anderson, M.A., ... Courtine, G. (2021). Confronting false discoveries in single-cell differential expression. *Nature Communications*, 12, 5692. https://doi.org/10.1038/s41467-021-25960-2
+
+**\[Ref. 19\]** Zimmerman, K.D., Espeland, M.A., Langefeld, C.D. (2021). A practical solution to pseudoreplication bias in single-cell studies. *Nature Communications*, 12, 738. https://doi.org/10.1038/s41467-021-21038-1
 

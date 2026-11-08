@@ -17,6 +17,7 @@ study-sc-rna-seq/
 │   └── plan_*.md                  # 今後の作業計画
 └── course/
     ├── sc-rna-seq.ipynb           # ハンズオン実行ノートブック（モジュール 1〜7）
+    ├── module6-multidonor.ipynb   # モジュール 6 発展版（複数ドナーの擬似バルク）
     └── data/                      # 解析データ（git 管理外．下記手順で取得）
 ```
 
@@ -59,6 +60,12 @@ curl https://cf.10xgenomics.com/samples/cell/pbmc3k/pbmc3k_filtered_gene_bc_matr
 tar -xzf data/pbmc3k_filtered_gene_bc_matrices.tar.gz -C data/
 ```
 
+モジュール 6 発展版では Kang et al. (2018) のデータを使う（`course/` で実行）：
+
+```bash
+curl -L https://exampledata.scverse.org/pertpy/kang_2018.h5ad -o data/kang_2018.h5ad
+```
+
 モジュール 7 の RNA velocity では，scVelo 付属のサンプルデータ（`scv.datasets.pancreas()`，膵臓内分泌細胞の分化）を実行時に自動ダウンロードする．
 
 ## 実行
@@ -69,9 +76,15 @@ tar -xzf data/pbmc3k_filtered_gene_bc_matrices.tar.gz -C data/
 uv run jupyter lab course/sc-rna-seq.ipynb
 ```
 
+モジュール 6 発展版は PyDESeq2（依存グループ `multidonor`，既定の `uv sync` では入らない）を使うので，グループを指定して起動する．全体の実行は約 1 分である．
+
+```bash
+uv run --group multidonor jupyter lab course/module6-multidonor.ipynb
+```
+
 ## 注意点
 
-- PBMC 3k は単一ドナー由来のため，モジュール 6 の疑似バルク解析は，細胞を無作為に分けた仮サンプルでの集約の実習にとどめ，検定は行わない．
+- PBMC 3k は単一ドナー由来のため，モジュール 6 の疑似バルク解析は，細胞を無作為に分けた仮サンプルでの集約の実習にとどめ，検定は行わない．複数ドナーのデータでの検定は発展版（`course/module6-multidonor.ipynb`）で行う．
 - モジュール 7 の DPT で使う根細胞（`iroot`）は便宜的に指定したもの．PBMC は分化系列のデータではないため，擬似時間の生物学的解釈には注意が必要．
 
 ## 主な参考資料
