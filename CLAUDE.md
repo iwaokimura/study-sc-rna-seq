@@ -67,9 +67,12 @@
 
   ```bash
   cd course
-  source .venv/bin/activate      # 未作成なら: uv venv .venv && uv pip install -r requirements.txt
-  jupyter nbconvert --to notebook --execute --inplace sc-rna-seq.ipynb
+  source .venv/bin/activate      # 未作成なら: uv venv .venv --python 3.13 && uv pip install -r requirements.txt
+  jupyter nbconvert --to notebook --execute --inplace --allow-errors --ExecutePreprocessor.timeout=1800 sc-rna-seq.ipynb
   ```
+
+- Python は 3.13（`course/.python-version`）．
+- 全体の実行には約 10 分かかる（大半はモジュール 7 の RNA velocity）．
 
 - データの相対パスは `course/` 基準（`data/filtered_gene_bc_matrices/hg19/`）．
 - 出力（図・実行結果）はノートブックに含めたままコミットする．

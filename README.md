@@ -34,11 +34,11 @@ study-sc-rna-seq/
 
 ## 環境構築
 
-[uv](https://docs.astral.sh/uv/) を用いる．
+[uv](https://docs.astral.sh/uv/) を用いる．Python は 3.13（`course/.python-version` で指定）．
 
 ```bash
 cd course
-uv venv .venv
+uv venv .venv --python 3.13
 source .venv/bin/activate
 uv pip install -r requirements.txt
 ```
