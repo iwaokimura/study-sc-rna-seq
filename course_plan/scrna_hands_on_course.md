@@ -477,11 +477,11 @@ scRNA-seq 解析の各ステップと数理的概念の対応を整理する：
 
 | リソース | 種別 | URL |
 |---|---|---|
-| Scanpy PBMC 3k 公式チュートリアル | Jupyter Notebook | https://scanpy-tutorials.readthedocs.io/en/latest/pbmc3k.html |
+| Scanpy PBMC 3k 公式チュートリアル（legacy workflow，Scanpy 1.12.x） | Jupyter Notebook | https://scanpy.readthedocs.io/en/1.12.x/tutorials/basics/clustering-2017.html |
 | Single-cell best practices（オンライン教科書） | Web/Jupyter | https://www.sc-best-practices.org |
 | theislab/single-cell-tutorial（GitHub） | コード | https://github.com/theislab/single-cell-tutorial |
 | Galaxy Training: Clustering 3K PBMCs with Scanpy | ブラウザ実行可 | https://training.galaxyproject.org/training-material/topics/single-cell/tutorials/scrna-scanpy-pbmc3k/tutorial.html |
-| Luecken & Theis (2019) 論文 | 査読済み論文 | https://www.embopress.org/doi/10.15252/msb.20188746 |
+| Luecken & Theis (2019) 論文 | 査読済み論文 | https://doi.org/10.15252/msb.20188746 |
 | Heumos et al. (2023) 論文 | 査読済み論文 | https://www.nature.com/articles/s41576-023-00586-w |
 
 ---
@@ -491,7 +491,7 @@ scRNA-seq 解析の各ステップと数理的概念の対応を整理する：
 
 **\[Ref. 1\]** Wolf, F.A., Angerer, P., Theis, F.J. (2018). SCANPY: large-scale single-cell gene expression data analysis. *Genome Biology*, 19, 15. https://doi.org/10.1186/s13059-017-1382-0
 
-**\[Ref. 2\]** Scanpy — PBMC 3k tutorial (Preprocessing and clustering 3k PBMCs). Scanpy Documentation. https://scanpy-tutorials.readthedocs.io/en/latest/pbmc3k.html
+**\[Ref. 2\]** Preprocessing and clustering 3k PBMCs (legacy workflow). Scanpy Documentation (version 1.12.x). https://scanpy.readthedocs.io/en/1.12.x/tutorials/basics/clustering-2017.html
 
 **\[Ref. 3\]** Single-cell best practices. Theis Lab, Helmholtz Munich. Online book (continuously updated). https://www.sc-best-practices.org
 

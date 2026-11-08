@@ -74,7 +74,7 @@ jupyter lab sc-rna-seq.ipynb
 
 ## 主な参考資料
 
-- Scanpy PBMC 3k チュートリアル：https://scanpy-tutorials.readthedocs.io/en/latest/pbmc3k.html
+- Scanpy PBMC 3k チュートリアル（legacy workflow）：https://scanpy.readthedocs.io/en/1.12.x/tutorials/basics/clustering-2017.html
 - Single-cell best practices（Theis Lab）：https://www.sc-best-practices.org
 - Luecken & Theis (2019), *Mol. Syst. Biol.* 15, e8746：https://doi.org/10.15252/msb.20188746
 - Heumos et al. (2023), *Nat. Rev. Genet.* 24, 550–572：https://doi.org/10.1038/s41576-023-00586-w
