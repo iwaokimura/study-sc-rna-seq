@@ -255,7 +255,8 @@ $$Q = \frac{1}{2m} \sum_{ij} \left[ A_{ij} - \frac{k_i k_j}{2m} \right] \delta(c
 ここで $A_{ij}$ は隣接行列，$k_i$ は頂点 $i$ の次数，$m$ は総辺数，$\delta(c_i, c_j)$ は $i, j$ が同クラスターのとき 1，そうでないとき 0 となる \[Ref. 11\]：
 
 ```python
-sc.tl.leiden(adata, resolution=0.5)
+# igraph 実装（将来の既定）を明示する．n_iterations=2 は Leiden の反復回数，igraph 実装は無向グラフのみ対応
+sc.tl.leiden(adata, resolution=0.5, flavor='igraph', n_iterations=2, directed=False)
 sc.pl.umap(adata, color=['leiden'], legend_loc='on data')
 ```
 
@@ -313,10 +314,10 @@ PBMC 3k（モジュール 4 の設定）での発現細胞割合の例：
 
 | Leiden | 細胞数 | 主なマーカー（発現細胞割合） | 細胞型 |
 |---|---|---|---|
-| 0 | 1184 | CD3D 0.88，IL7R 0.66，CD8A 0.12 | CD4 T |
-| 1 | 641 | CD14 0.54，LYZ 1.00，FCGR3A 0.34，MS4A7 0.40 | Monocyte（CD14+ と FCGR3A+ の混在） |
-| 2 | 425 | NKG7 0.99，GNLY 0.56，CD3D 0.60，CD8A 0.35 | CD8 T / NK |
-| 3 | 341 | MS4A1 0.86，CD79A 0.94 | B |
+| 0 | 1192 | CD3D 0.88，IL7R 0.66，CD8A 0.12 | CD4 T |
+| 1 | 341 | MS4A1 0.86，CD79A 0.94 | B |
+| 2 | 641 | CD14 0.54，LYZ 1.00，FCGR3A 0.34，MS4A7 0.40 | Monocyte（CD14+ と FCGR3A+ の混在） |
+| 3 | 417 | NKG7 1.00，GNLY 0.57，CD3D 0.59，CD8A 0.35 | CD8 T / NK |
 | 4 | 34 | FCER1A 0.82，CST3 1.00 | Dendritic |
 | 5 | 13 | PPBP 1.00 | Platelet |
 
@@ -325,9 +326,9 @@ PBMC 3k（モジュール 4 の設定）での発現細胞割合の例：
 # 根拠は上の dotplot と発現細胞割合の表
 cell_type_map = {
     '0': 'CD4 T',       # CD3D, IL7R
-    '1': 'Monocyte',    # CD14, LYZ（古典的）と FCGR3A, MS4A7（非古典的）が混在
-    '2': 'CD8 T / NK',  # NKG7, GNLY．CD3D・CD8A を発現する細胞（CD8 T）も含む
-    '3': 'B',           # MS4A1, CD79A
+    '1': 'B',           # MS4A1, CD79A
+    '2': 'Monocyte',    # CD14, LYZ（古典的）と FCGR3A, MS4A7（非古典的）が混在
+    '3': 'CD8 T / NK',  # NKG7, GNLY．CD3D・CD8A を発現する細胞（CD8 T）も含む
     '4': 'Dendritic',   # FCER1A, CST3
     '5': 'Platelet',    # PPBP
 }
@@ -465,6 +466,7 @@ import numpy as np
 
 # 根細胞（幹細胞に近い細胞）を指定
 adata.uns['iroot'] = np.flatnonzero(adata.obs['leiden'] == '0')[0]
+sc.tl.diffmap(adata)  # 拡散写像（DPT の前提）を先に計算する
 sc.tl.dpt(adata)
 sc.pl.umap(adata, color=['dpt_pseudotime'], color_map='viridis')
 ```
@@ -489,7 +491,10 @@ import scvelo as scv
 adata_velo = scv.datasets.pancreas()
 
 scv.pp.filter_and_normalize(adata_velo, min_shared_counts=20)
-scv.pp.moments(adata_velo, n_pcs=30, n_neighbors=30)
+# 近傍グラフは Scanpy で先に作る（scVelo による自動計算は非推奨）
+sc.pp.pca(adata_velo, n_comps=30)
+sc.pp.neighbors(adata_velo, n_neighbors=30, n_pcs=30)
+scv.pp.moments(adata_velo, n_pcs=None, n_neighbors=None)
 
 # dynamical モデルの前に splicing dynamics を推定する
 scv.tl.recover_dynamics(adata_velo)
@@ -513,7 +518,10 @@ scv.utils.clean_obs_names(adata_velo)
 adata_velo = scv.utils.merge(adata_velo, adata)
 
 scv.pp.filter_and_normalize(adata_velo, min_shared_counts=20)
-scv.pp.moments(adata_velo, n_pcs=30, n_neighbors=30)
+# 近傍グラフは Scanpy で先に作る（scVelo による自動計算は非推奨）
+sc.pp.pca(adata_velo, n_comps=30)
+sc.pp.neighbors(adata_velo, n_neighbors=30, n_pcs=30)
+scv.pp.moments(adata_velo, n_pcs=None, n_neighbors=None)
 scv.tl.recover_dynamics(adata_velo)
 scv.tl.velocity(adata_velo, mode='dynamical')
 scv.tl.velocity_graph(adata_velo)
