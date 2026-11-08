@@ -144,7 +144,7 @@ sc.pl.scatter(adata, x='total_counts', y='n_genes_by_counts')
 
 # フィルタリング
 adata = adata[adata.obs.n_genes_by_counts < 2500, :]
-adata = adata[adata.obs.pct_counts_mt < 5, :]
+adata = adata[adata.obs.pct_counts_mt < 5, :].copy()  # ビューを実体にする
 sc.pp.filter_genes(adata, min_cells=3)
 ```
 
@@ -178,12 +178,14 @@ adata.raw = adata  # 正規化済みデータを保存
 ```python
 sc.pp.highly_variable_genes(adata, min_mean=0.0125, max_mean=3, min_disp=0.5)
 print(f"HVG 数: {adata.var.highly_variable.sum()}")  # 通常 2,000〜4,000
-adata = adata[:, adata.var.highly_variable]
+adata = adata[:, adata.var.highly_variable].copy()
 ```
 
 スケーリング（平均 0，分散 1）は PCA の前処理として標準的だが，scRNA-seq ではスパース性を損なうというトレードオフがある \[Ref. 3\]：
 
 ```python
+# 中心化すると疎でなくなるので，先に密行列にする（2,638 細胞 × HVG なら十分小さい）
+adata.X = adata.X.toarray()
 sc.pp.scale(adata, max_value=10)
 ```
 
