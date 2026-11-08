@@ -341,34 +341,77 @@ sc.pl.rank_genes_groups(adata, groups=['CD14 Mono'])
 sc.pl.rank_genes_groups_violin(adata, groups='CD14 Mono', n_genes=8)
 ```
 
-### 擬似バルク法（Pseudobulk）
+### 擬似バルク法（Pseudobulk）：集約の実習
 
-複数サンプルが存在する場合，同一サンプルの複数細胞を集計してからサンプル間比較を行う手法（擬似バルク法）が現在のベストプラクティスである \[Ref. 5\]：
+複数サンプル（被験者）がある場合，同一サンプル・同一細胞型の細胞のカウントを足し合わせてからサンプル間で比較する（擬似バルク法）．同一被験者由来の細胞は独立ではないため，細胞を独立な観測として検定すると偽陽性が増える（擬似反復問題）\[Ref. 5\]．
+
+**定式化．** 細胞 $i = 1, \dots, n$ のサンプルを $s(i)$，細胞型を $c(i)$ とし，組 $g = (s, c)$ をグループとする．グループ数を $k$ とし，所属行列 $A \in \{0, 1\}^{k \times n}$ を $A_{gi} = 1 \iff (s(i), c(i)) = g$ で定める．生カウント行列 $X \in \mathbb{Z}_{\geq 0}^{n \times m}$ に対し，擬似バルク行列は
+
+$$Y = A X \in \mathbb{Z}_{\geq 0}^{k \times m}, \qquad Y_{gj} = \sum_{i \,:\, (s(i), c(i)) = g} X_{ij}$$
+
+である．$A$ の各列はちょうど 1 つの成分が $1$ なので，$\mathbf{1}_k^\top Y = \mathbf{1}_n^\top X$（遺伝子ごとの総カウントは保存される）．
+
+**注意．**
+
+- 集約するのは **生カウント** である．この時点の `adata.X` は正規化・対数変換・HVG 抽出・スケーリング済みであり，足し合わせても意味がない．そこで生カウントを読み直す．
+- PBMC 3k は **単一ドナー** 由来である．ここでは細胞を無作為に $K = 3$ 個の仮サンプルに割り当てるが，これは同一個体の技術的な分割にすぎず，生物学的反復ではない．したがって $Y$ を用いた差次発現検定は行わない（得られる $p$ 値は生物学的推論に使えない）．本来はドナーごとにサンプルを構成する．
 
 ```python
 import numpy as np
 import pandas as pd
+import scipy.sparse as sp
 
-# ※ PBMC 3k データには 'sample' 列がないため，以下は複数サンプルがある場合の例示
-# adata.obs['sample'] 列が存在する前提
+# 1. 生カウント行列を読み直し，QC 後の細胞に揃える
+#    （この時点の adata.X は正規化・対数変換・HVG 抽出・スケーリング済みで，足し合わせても意味がない）
+counts = sc.read_10x_mtx('data/filtered_gene_bc_matrices/hg19/', var_names='gene_symbols')
+counts.var_names_make_unique()
+counts = counts[adata.obs_names, :].copy()
+counts.obs['cell_type'] = adata.obs['cell_type'].values
 
-pseudobulk_rows = []
-pseudobulk_index = []
-for (sample, cell_type), idx in adata.obs.groupby(['sample', 'cell_type']).groups.items():
-    mat = adata[idx, :].X
-    # 疎行列（scipy sparse）は sum(axis=0) が matrix 型を返すため，1D 配列に変換する
-    counts = np.asarray(mat.sum(axis=0)).flatten()
-    pseudobulk_rows.append(counts)
-    pseudobulk_index.append((sample, cell_type))
+# 2. 細胞を無作為に K 個の仮サンプルに割り当てる（単一ドナーなので生物学的反復ではない）
+K = 3
+rng = np.random.default_rng(0)
+counts.obs['sample'] = pd.Categorical([f'pseudo{s}' for s in rng.integers(K, size=counts.n_obs)])
+print(pd.crosstab(counts.obs['sample'], counts.obs['cell_type']))
+
+# 3. 所属行列 A ∈ {0,1}^{k×n}：A[g, i] = 1 ⇔ 細胞 i がグループ g = (sample, cell_type) に属する
+keys = counts.obs['sample'].astype(str) + '|' + counts.obs['cell_type'].astype(str)
+group = pd.Categorical(keys)
+n = counts.n_obs
+k = len(group.categories)
+A = sp.csr_matrix((np.ones(n), (group.codes, np.arange(n))), shape=(k, n))
+
+# 4. 擬似バルク行列 Y = A X（k × m）
+X = counts.X  # n × m の生カウント（疎行列）
+Y = (A @ X).toarray().astype(np.int64)
+print(f'X: {X.shape}, A: {A.shape}, Y: {Y.shape}')
 
 pseudobulk = pd.DataFrame(
-    pseudobulk_rows,
-    index=pd.MultiIndex.from_tuples(pseudobulk_index, names=['sample', 'cell_type']),
-    columns=adata.var_names,
+    Y,
+    index=pd.MultiIndex.from_tuples([tuple(g.split('|')) for g in group.categories],
+                                    names=['sample', 'cell_type']),
+    columns=counts.var_names,
 )
+
+# 5. 検算
+assert Y.sum() == X.sum()                                   # 総カウントは保存される
+n_cells = counts.obs.groupby(['sample', 'cell_type'], observed=True).size()
+n_cells.index = n_cells.index.map(lambda t: tuple(map(str, t)))
+assert (np.asarray(A.sum(axis=1)).ravel() == n_cells.loc[pseudobulk.index].values).all()  # A の行和 = 各グループの細胞数
+
+agg = sc.get.aggregate(counts, by=['sample', 'cell_type'], func='sum')  # Scanpy 組み込み関数と一致するか
+agg_sum = agg.layers['sum']
+agg_df = pd.DataFrame(agg_sum.toarray() if sp.issparse(agg_sum) else np.asarray(agg_sum),
+                      index=pd.MultiIndex.from_frame(agg.obs[['sample', 'cell_type']].astype(str)),
+                      columns=agg.var_names)
+assert (agg_df.loc[pseudobulk.index].values == Y).all()
+print('検算 OK')
+
+print(f'ゼロ成分の割合: X = {1 - X.nnz / np.prod(X.shape):.3f}, Y = {(Y == 0).mean():.3f}')
+pseudobulk[['LYZ', 'CD14', 'MS4A1', 'CD79A', 'IL7R', 'NKG7']]
 ```
 
-> **統計的注意**：同一被験者由来の多数の細胞を独立サンプルとして扱うと偽陽性が激増する（**擬似反復問題**）\[Ref. 5\]．ランダム効果モデルまたは被験者ごとの集計（pseudobulk）による対処が強く推奨される \[Ref. 5\]．
+多数のドナーを含む実データで擬似バルクから負の二項 GLM による検定まで行う発展版は，[`plan_module6_multidonor.md`](plan_module6_multidonor.md) に計画を記す．
 
 ---
 
