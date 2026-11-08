@@ -43,12 +43,12 @@ PBMC 3k は単一ドナー由来のため，擬似バルク法の本来の目的
 
 ## 決めておくこと・未確認事項
 
-- [ ] **データの取得方法**：pertpy 1.5.0（2026-11-08 時点の最新）は Python >= 3.13 を要求する．現在の `course/.venv` は Python 3.12 なので，次のどれかを選ぶ．
+- [ ] **データの取得方法**：pertpy 1.5.0（2026-11-08 時点の最新）は Python >= 3.13 を要求する．（2026-11-08 追記：環境は Python 3.13 に移行済みで，pertpy 1.5.0 と PyDESeq2 0.5.4 が入ることを確認した．）当初の選択肢：
   - (a) 環境を Python 3.13 に上げて pertpy を入れる．
   - (b) pertpy の古い版で Python 3.12 に対応するものを使う（対応版は未確認）．
   - (c) pertpy を使わず，データファイル（h5ad）を直接ダウンロードする（配布元 URL は未確認）．
 - [ ] PyDESeq2 0.5.x の API（`DeseqDataSet` / `DeseqStats` の引数名，計画式の書き方）を公式ドキュメントで確認する．
 - [ ] 擬似バルクにするときの最小細胞数の閾値を，sc-best-practices の章に合わせて決める．
-- [ ] 追加するパッケージを `requirements.txt` に反映する（`uv pip freeze > requirements.txt`）．
+- [ ] パッケージは依存グループとして追加する（`uv add --group multidonor pertpy pydeseq2`）．`pyproject.toml` と `uv.lock` をコミットする．
 - [ ] 参考文献（Kang et al. 2018，PyDESeq2，Squair et al. 2021 など擬似反復の文献）を `scrna_hands_on_course.md` の参考文献リストに追加する．書誌情報は Crossref 等で確認する．
 - [ ] データのダウンロードサイズと実行時間を見積もる．

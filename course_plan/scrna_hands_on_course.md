@@ -57,24 +57,20 @@
 
 ### 環境構築
 
-`uv` を使って仮想環境を作成し，必要なパッケージをインストールする：
+`uv` のプロジェクト管理を使う．依存パッケージはリポジトリ直下の `pyproject.toml` に，全パッケージの正確な版は `uv.lock` に記録されている．Python の版は `.python-version`（3.13）で指定する：
 
 ```bash
 # uv 本体のインストール（未インストールの場合）
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# 仮想環境の作成と有効化
-uv venv .venv
-source .venv/bin/activate
+# リポジトリ直下で，uv.lock どおりの環境を .venv/ に作る
+uv sync
 
-# パッケージのインストール
-uv pip install scanpy anndata numpy pandas matplotlib seaborn umap-learn leidenalg python-igraph
-
-# Jupyter Notebook も使用する場合
-uv pip install jupyter
+# JupyterLab の起動
+uv run jupyter lab course/sc-rna-seq.ipynb
 ```
 
-Jupyter Notebook での作業を推奨する（Google Colab を使う場合は `uv` 不要で `pip install` を直接実行する）\[Ref. 2\]．
+JupyterLab での作業を推奨する（Google Colab を使う場合は `uv` 不要で，必要なパッケージを `pip install` で直接入れる）．
 
 ### データ取得
 

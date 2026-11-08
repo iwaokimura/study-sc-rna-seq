@@ -63,20 +63,19 @@
 
 ## ノートブック
 
-- Claude がセルを編集・実行してよい．実行は `course/` 直下の仮想環境で行う：
+- Claude がセルを編集・実行してよい．実行はリポジトリ直下の uv 環境で行う：
 
   ```bash
-  cd course
-  source .venv/bin/activate      # 未作成なら: uv venv .venv --python 3.13 && uv pip install -r requirements.txt
-  jupyter nbconvert --to notebook --execute --inplace --allow-errors --ExecutePreprocessor.timeout=1800 sc-rna-seq.ipynb
+  uv sync    # 環境が未作成・古い場合
+  uv run jupyter nbconvert --to notebook --execute --inplace --allow-errors --ExecutePreprocessor.timeout=1800 course/sc-rna-seq.ipynb
   ```
 
-- Python は 3.13（`course/.python-version`）．
+- Python は 3.13（リポジトリ直下の `.python-version`）．
 - 全体の実行には約 10 分かかる（大半はモジュール 7 の RNA velocity）．
 
 - データの相対パスは `course/` 基準（`data/filtered_gene_bc_matrices/hg19/`）．
 - 出力（図・実行結果）はノートブックに含めたままコミットする．
-- パッケージを追加したら `uv pip freeze > requirements.txt` で更新する．
+- パッケージは `uv add <pkg>`（発展版用など任意のものは `uv add --group <名前> <pkg>`）で追加し，`pyproject.toml` と `uv.lock` をコミットする．`uv pip install` で直接入れない．
 
 ## Git
 

@@ -8,12 +8,15 @@
 
 ```
 study-sc-rna-seq/
+├── pyproject.toml                 # 依存パッケージ（直接使うもの）
+├── uv.lock                        # 依存関係のロック（全パッケージの版）
+├── .python-version                # Python の版（3.13）
 ├── course_plan/
 │   ├── sc-RNAseq-analysis.md      # 初版のコース設計
-│   └── scrna_hands_on_course.md   # 詳細版コースノート（最新．uv による環境構築を含む）
+│   ├── scrna_hands_on_course.md   # 詳細版コースノート（最新）
+│   └── plan_*.md                  # 今後の作業計画
 └── course/
     ├── sc-rna-seq.ipynb           # ハンズオン実行ノートブック（モジュール 1〜7）
-    ├── requirements.txt           # 依存パッケージ（uv pip freeze）
     └── data/                      # 解析データ（git 管理外．下記手順で取得）
 ```
 
@@ -34,16 +37,15 @@ study-sc-rna-seq/
 
 ## 環境構築
 
-[uv](https://docs.astral.sh/uv/) を用いる．Python は 3.13（`course/.python-version` で指定）．
+[uv](https://docs.astral.sh/uv/) のプロジェクト管理（`pyproject.toml` + `uv.lock`）を用いる．Python は 3.13（`.python-version` で指定）．リポジトリ直下で
 
 ```bash
-cd course
-uv venv .venv --python 3.13
-source .venv/bin/activate
-uv pip install -r requirements.txt
+uv sync
 ```
 
-主なパッケージ：scanpy 1.12.1，anndata 0.12.11，leidenalg 0.11.0，umap-learn 0.5.12，scvelo 0.3.4，jupyterlab 4.5.6．
+を実行すると，`uv.lock` どおりの環境が `.venv/` に作られる．
+
+主なパッケージ：scanpy 1.12.1，anndata 0.12.11，leidenalg 0.11.0，umap-learn 0.5.12，scvelo 0.3.4，jupyterlab 4.5.6（正確な版は `uv.lock` を参照）．
 
 ## データ取得
 
@@ -61,15 +63,15 @@ tar -xzf data/pbmc3k_filtered_gene_bc_matrices.tar.gz -C data/
 
 ## 実行
 
+リポジトリ直下で
+
 ```bash
-cd course
-source .venv/bin/activate
-jupyter lab sc-rna-seq.ipynb
+uv run jupyter lab course/sc-rna-seq.ipynb
 ```
 
 ## 注意点
 
-- PBMC 3k にはサンプル情報がないため，モジュール 6 の疑似バルク解析のコードは複数サンプルがある場合の例示にとどまる．
+- PBMC 3k は単一ドナー由来のため，モジュール 6 の疑似バルク解析は，細胞を無作為に分けた仮サンプルでの集約の実習にとどめ，検定は行わない．
 - モジュール 7 の DPT で使う根細胞（`iroot`）は便宜的に指定したもの．PBMC は分化系列のデータではないため，擬似時間の生物学的解釈には注意が必要．
 
 ## 主な参考資料
