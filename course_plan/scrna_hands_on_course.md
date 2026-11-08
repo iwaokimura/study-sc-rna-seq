@@ -265,6 +265,31 @@ sc.pl.umap(adata, color=['leiden'], legend_loc='on data')
 
 > **数理的注意**：モジュラリティ最適化は NP 困難問題であり，Leiden アルゴリズムは局所最適解を与える近似アルゴリズムである．`resolution` パラメータの選択に一意の正解はなく，生物学的意味との照合が必要である \[Ref. 11\]．
 
+### 演習：`resolution` を変える
+
+ノートブックのモジュール 4 に，問題・コード・解答例がある．`resolution` は次のモジュラリティの係数 $\gamma$ である（重み付き隣接行列 $W$ ， $k_i = \sum_j W_{ij}$ ， $2m = \sum_{ij} W_{ij}$ ， $K_c = \sum_{i \in c} k_i$ ）：
+
+$$Q_\gamma(P) = \frac{1}{2m} \sum_{ij} \left[ W_{ij} - \gamma \frac{k_i k_j}{2m} \right] \delta(c_i, c_j) = E(P) - \gamma F(P), \qquad F(P) = \sum_{c \in P} \left( \frac{K_c}{2m} \right)^2$$
+
+ここで $E(P)$ はクラスター内に収まる辺の重みの割合である． $\gamma_1 < \gamma_2$ の最適分割 $P_1$ ， $P_2$ については，最適性の不等式を足し合わせると $F(P_1) \geq F(P_2)$ が従う．ただし $P_2$ が $P_1$ の細分であることは導けない．
+
+PBMC 3k での結果（シードは 0．単調性は Leiden の近似解では保証されないが，この実行では成り立つ）：
+
+| `resolution` | クラスター数 | $E$ | $F$ | $Q_1$ | シードを変えたときの ARI の最小値 |
+|---:|---:|---:|---:|---:|---:|
+| 0.1 | 4 | 0.997 | 0.459 | 0.538 | 1.000 |
+| 0.25 | 6 | 0.982 | 0.369 | 0.613 | 0.809 |
+| 0.5 | 6 | 0.967 | 0.314 | 0.653 | 0.832 |
+| 0.75 | 7 | 0.952 | 0.289 | 0.663 | 0.959 |
+| 1.0 | 8 | 0.863 | 0.180 | 0.683 | 0.621 |
+| 1.5 | 13 | 0.768 | 0.104 | 0.664 | 0.576 |
+| 2.0 | 22 | 0.697 | 0.065 | 0.632 | 0.668 |
+
+- 単球は `resolution=0.75` で CD14+ と FCGR3A+ に分かれ，CD8+ T と NK は `resolution=1.5` で分かれる（6 遺伝子の発現細胞割合による目安）．
+- $Q_1$ の最大は `resolution=1.0` で，CD8+ T と NK が分かれるのはその後である．モジュラリティには解像度の限界もある \[Ref. 20\]．
+- 隣り合う `resolution` の分割は，0.1 から 0.25 への組を除いて細分になっていない．
+- `resolution` が 1.0 以上では，シードによる揺れが大きい．
+
 ---
 
 <a id="module5"></a>
@@ -635,4 +660,6 @@ scRNA-seq 解析の各ステップと数理的概念の対応を整理する：
 **\[Ref. 18\]** Squair, J.W., Gautier, M., Kathe, C., Anderson, M.A., ... Courtine, G. (2021). Confronting false discoveries in single-cell differential expression. *Nature Communications*, 12, 5692. https://doi.org/10.1038/s41467-021-25960-2
 
 **\[Ref. 19\]** Zimmerman, K.D., Espeland, M.A., Langefeld, C.D. (2021). A practical solution to pseudoreplication bias in single-cell studies. *Nature Communications*, 12, 738. https://doi.org/10.1038/s41467-021-21038-1
+
+**\[Ref. 20\]** Fortunato, S., Barthélemy, M. (2007). Resolution limit in community detection. *Proceedings of the National Academy of Sciences*, 104(1), 36–41. https://doi.org/10.1073/pnas.0605965104
 
